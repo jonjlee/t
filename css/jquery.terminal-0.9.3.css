@@ -94,7 +94,7 @@
     background-color: #aaa;
     color: #222;
 }
-.cmd .cursor.blink {
+/*.cmd .cursor.blink {
     -webkit-animation: terminal-blink 1s infinite steps(1, start);
        -moz-animation: terminal-blink 1s infinite steps(1, start);
         -ms-animation: terminal-blink 1s infinite steps(1, start);
@@ -138,11 +138,15 @@
       color: #aaa;
   }
   50% {
-      background-color: #bbb; /* not #aaa because it's seems there is Google Chrome bug */
+      // not #aaa because it's seems there is Google Chrome bug
+      background-color: #bbb; 
       color: #000;
   }
-}
+}*/
 
+.terminal {
+    border: 1px solid #ccc;
+}
 .terminal .terminal-output div div, .cmd .prompt {
     display: block;
     line-height: 17px;
@@ -154,8 +158,8 @@
 .terminal, .cmd {
     font-family: monospace;
     /*font-family: FreeMono, monospace; this don't work on Android */
-    color: #aaa;
-    background-color: #222;
+    color: #000;
+    background-color: #fff;
     font-size: 15px;
     line-height: 17px;
 }
