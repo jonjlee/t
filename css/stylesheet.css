@@ -15,9 +15,11 @@ min.css adjustments
 /*******************************************************************************
 T styles
 *******************************************************************************/
-.outer {
-  width: 100%;
-  margin-bottom: 20px;
+.wrap {
+  min-height: 100%;
+  height: auto;
+  margin: 0 auto -20px;  /* Negative indent footer by its height */
+  padding: 0 0 20px;     /* Pad bottom by footer height */
 }
 
 .tagline {
@@ -26,9 +28,10 @@ T styles
 
 footer.nav {
   color: #f2f2f2;
-  padding: 15px;
-  height: auto;
+  padding: 15px 10px 10px 10px;
+  height: 20px;
   text-align: center;
+  vertical-align: middle;
 }
 footer.nav a {
   color: #F2F2F2;
@@ -50,5 +53,5 @@ h3 {
   background: #fff;
   border: #aaa 1px solid;
   font-size: 12pt;
-  height: 100px;
+  min-height: 100px;
 }

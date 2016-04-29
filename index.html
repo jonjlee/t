@@ -25,23 +25,25 @@
     </nav>
 
     <!-- MAIN CONTENT -->
-    <div class="container">
-      <div class="row">
-        <div class="col c6">
-          <h3>Note Text</h3>
-          <div id="editor-in" class="editor"></div>
-          <button id="submit-note" class="btn btn-sm btn-a smooth" title="Process (⌘+Enter)">Process</button>
+    <div class="wrap">
+      <div class="container">
+        <div class="row">
+          <div class="col c6">
+            <h3>Note Text</h3>
+            <div id="editor-in" class="editor"></div>
+            <button id="submit-note" class="btn btn-sm btn-a smooth" title="Process (⌘+Enter)">Process</button>
+          </div>
+          <div class="col c6">
+            <a id="note-out" class="anchor" href="#note-out" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>
+            <h3>Processed Text</h3>
+            <div id="editor-out" class="static_text" contenteditable="true"></div>
+          </div>
         </div>
-        <div class="col c6">
-          <a id="note-out" class="anchor" href="#note-out" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>
-          <h3>Processed Text</h3>
-          <div id="editor-out" class="static_text" contenteditable="true"></div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col c12">
-          <h3>Calculator</h3>
-          <div id="console"></div>
+        <div class="row">
+          <div class="col c12">
+            <h3>Calculator</h3>
+            <div id="console"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -59,6 +61,7 @@
     <script src="js/jquery.terminal-0.9.3.min.js"></script>
     <!--<script src="js/quill.min.js"></script>-->
     <script src="js/tinymce/tinymce.min.js"></script>
+    <script src="js/keymaster.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>
