@@ -1,15 +1,11 @@
-var quillIn = null, 
-    quillOut = null;
-
 function initUI() {
-  // Initialize quill.js editors
-  quillIn = new Quill('#editor-in', {
-    modules: { toolbar: '#editor-in-toolbar' },
-    theme: 'snow'
-  });
-  quillOut = new Quill('#editor-out', {
-    modules: { toolbar: '#editor-out-toolbar' },
-    theme: 'snow'
+  // Initialize editors
+  tinymce.init({
+    selector: '.editor',
+    plugins: ['lists table contextmenu paste'],
+    toolbar: false, //'bold italic | bullist numlist outdent indent | link image',
+    menubar: false,
+    statusbar: false,
   });
   
   // Initialize js console
@@ -34,25 +30,22 @@ function initUI() {
   });
   
   // Initialize handlers
-  var quillInKeyboard = quillIn.getModule('keyboard');
   $('#submit-note').click(submitNote);
-  quillInKeyboard.addHotkey({ key: 13, metaKey: true }, submitNote);
 }
 
 function submitNote() {
-  var text = quillIn.getText(),
-      html = quillIn.getHTML(),
+  var text = tinymce.get('editor-in').getContent({format: 'text'}),
+      html = tinymce.get('editor-in').getContent({format: 'html'}),
       unescaped = _.unescape(html),
-      preprocessed = preprocess(text, unescaped);
+      preprocessed = preprocess(text, unescaped),
       compiled = _.template(preprocessed, {
         variable: 'd'
-      }),
-  
-  quillOut.setHTML(compiled({}));
+      });
+  $('#editor-out').html(compiled({}));
 }
 
 function preprocess(text, html, delimiters) {
-  delimiters = delimiters || ['<%==', '%>'];
+  delimiters = delimiters || ['<%%', '%>'];
   var code = text.match(new RegExp(delimiters[0] + '((?:.|[\r\n])*?)' + delimiters[1]));
   if (code) {
     try {
@@ -61,7 +54,7 @@ function preprocess(text, html, delimiters) {
       console.log(e);
     }
   } 
-  return html.replace(new RegExp(delimiters[0] + '.*?' + delimiters[1] + '\s*<\/div>'), '');
+  return html.replace(new RegExp(delimiters[0] + '.*?' + delimiters[1] + '\s*(:?<br />)?'), '');
 }
 
 jQuery(document).ready(function($) {
