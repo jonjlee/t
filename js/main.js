@@ -41,7 +41,7 @@ function initUI() {
 
 function submitNote() {
   var text = tinymce.get('editor-in').getContent({format: 'text'}),
-      html = tinymce.get('editor-in').getContent({format: 'html'}),
+      html = tinymce.get('editor-in').getContent({format: 'raw'}),
       preprocessed = preprocess(text, html),
       compiled = _.template(preprocessed, {
         variable: 'd'
@@ -52,24 +52,45 @@ function submitNote() {
 function preprocess(text, html, delimiters) {
   delimiters = delimiters || ['<script>', '</script>'];
   
-  var script = getScripts(text, delimiters),
-      noscript = removeScripts(html, delimiters),
-      unescaped = unescapeTemplateTags(noscript);
-
-  return unescaped;
+  // Get html without <script> sections
+  var noscript = removeScripts(html, delimiters),
+      unescaped = unescapeTemplateTags(noscript),
+      data = {text: unescaped};
+      
+  // Convert <script> sections into a function then execute
+  // with the html in the variable text 
+  var preprocessor = getScripts(text, delimiters);
+  
+  preprocessor(data);
+  return data.text;
 }
 
 function getScripts(text, delimiters) {
   var newlines = /\r?\n/g,
+      multilinestr = /"""([\s\S]*?)"""/g,
       matcher = new RegExp(delimiters[0] + '([\\s\\S]*?)' + delimiters[1], 'g'),
       section = '',
       script = '';
 
+  // Extract and combine <script> sections
   while (section = matcher.exec(text)) {
     script += section[1] + '; ';
   }
 
-  return _.template('<% ' + script + ' %>');
+  // Combine multiline strings
+  var index = 0,
+      combined = '';
+  while (str = multilinestr.exec(script)) {
+    var offset = str.index,
+        match = str[0],
+        contents = str[1];
+    combined += script.slice(index, offset) +
+                '"' + contents.replace(newlines, '\\n') + '"';
+    index = offset + match.length;
+  }
+  combined += script.slice(index);
+  
+  return _.template('<% ' + combined + ' %>');
 }
 
 function removeScripts(html, delimiters) {
