@@ -7,52 +7,57 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="T : Templating and tools for quicker patient notes.">
 
-    <link rel="stylesheet" type="text/css" href="css/min.css">
-    <link rel="stylesheet" type="text/css" href="css/stylesheet.css">
     <link rel="stylesheet" type="text/css" href="css/jquery.terminal-0.9.3.css"/>
-    <!--<link rel="stylesheet" type="text/css" href="css/quill.snow.css"/>-->
-    <script src="js/respond.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/stylesheet.css">
     
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+        
     <title>T</title>
   </head>
 
   <body>
-    <!-- HEADER -->
-    <nav class="nav" tabindex="-1">
+    <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container">
-        <span class="pagename current">T <span class="tagline">: Templating and tools for quicker patient notes.</span></span>
+        <div class="navbar-header">
+          <span class="navbar-brand">T <span class="tagline">: Templating and tools for quicker notes</span></span>
+        </div>
       </div>
     </nav>
 
     <!-- MAIN CONTENT -->
-    <div class="wrap">
-      <div class="container">
-        <div class="row">
-          <div class="col c6">
-            <h3>Note Text</h3>
-            <div id="editor-in" class="editor"></div>
-            <button id="submit-note" class="btn btn-sm btn-a smooth" title="Process (⌘+Enter)">Process</button>
-          </div>
-          <div class="col c6">
-            <a id="note-out" class="anchor" href="#note-out" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>
-            <h3>Processed Text</h3>
-            <div id="editor-out" class="static_text" contenteditable="true"></div>
-          </div>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-6">
+          <h4>Note Text</h4>
+          <div id="editor-in" class="editor"></div>
+          <p class="text-right">
+            <button id="submit-note" class="btn btn-primary" title="Process (Ctrl+Enter)">Process</button>
+          </p>
         </div>
-        <div class="row">
-          <div class="col c12">
-            <h3>Calculator</h3>
-            <div id="console"></div>
-          </div>
+        <div class="col-md-6">
+          <a id="note-out" class="anchor" href="#note-out" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>
+          <h4>Processed Text</h4>
+          <div id="editor-out" class="editor" contenteditable="true"></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <h4>Calculator</h4>
+          <div id="console"></div>
         </div>
       </div>
     </div>
-    
-    <!-- FOOTER  -->
-    <footer class="nav" tabindex="-1">
-        Maintained by <a href="https://github.com/jonjlee">jonjlee</a>. View on <a href="https://github.com/jonjlee/t">GitHub</a>.
-    </footer>
 
+    <footer class="footer">
+      <div class="container">
+        <p class="text-muted">Maintained by <a href="https://github.com/jonjlee">jonjlee</a>. View on <a href="https://github.com/jonjlee/t">GitHub</a>.</p>
+      </div>
+    </footer>
     
     <!-- Scripts at end for faster load -->
     <script src="js/lodash.js"></script>

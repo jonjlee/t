@@ -1,35 +1,57 @@
+var terminal = null;
+
 function initUI() {
   // Initialize editors
   tinymce.init({
     selector: '.editor',
+    auto_focus: 'editor-in',
     plugins: ['lists table paste'],
+    content_css: 'css/stylesheet.css',
+    min_height: '100px',
+    nowrap: false,
     toolbar: false, //'bold italic | bullist numlist outdent indent | link image',
     menubar: false,
     statusbar: false,
     setup: function(editor) {
       editor.addShortcut('ctrl+13, meta+13', 'Process', submitNote);
+      editor.addShortcut('ctrl+1', 'Focus Note Text', focusEditor);
+      editor.addShortcut('ctrl+2', 'Focus Processed Text', focusProcessed);
+      editor.addShortcut('ctrl+3', 'Focus Calculator', focusConsole);
     }
   });
   
   // Initialize js console
-  $('#console').terminal(function (command, term) {
-    if (command !== '') {
-      try {
-        var result = window.eval(command);
-        if (result !== undefined) {
-          term.echo(new String(result));
+  terminal = $('#console').terminal(function (command, term) {
+      if (command !== '') {
+        try {
+          var result = window.eval(command);
+          if (result !== undefined) {
+            term.echo(new String(result));
+          }
+        } catch (e) {
+          term.error(new String(e));
         }
-      } catch (e) {
-        term.error(new String(e));
+      } else {
+        term.echo('');
       }
-    } else {
-      term.echo('');
-    }
-  }, {
+    }, {
       greetings: '',
       name: 'jsconsole',
-      height: 100,
-      prompt: '> '
+      height: 200,
+      prompt: '> ',
+      enabled: false,
+      keydown: function(e) {
+        if (e.ctrlKey && e.which == 49) {
+          focusEditor();
+          return false;
+        } else if (e.ctrlKey && e.which == 50) {
+          focusProcessed();
+          return false;
+        } else if (e.ctrlKey && e.which == 13) {
+          submitNote();
+          return false;
+        }
+      }
   });
   
   // Initialize handlers
@@ -37,16 +59,46 @@ function initUI() {
 
   // Keyboard shortcuts
   key('ctrl+enter, ⌘+enter', submitNote);
+  key('ctrl+1', focusEditor);
+  key('ctrl+2', focusProcessed);
+  key('ctrl+3', focusConsole);
+}
+
+function focusEditor() {
+  tinymce.get('editor-in').focus();
+}
+
+function focusProcessed() {
+  tinymce.get('editor-out').focus();
+}
+
+function focusConsole() {
+  terminal.focus();
 }
 
 function submitNote() {
   var text = tinymce.get('editor-in').getContent({format: 'text'}),
       html = tinymce.get('editor-in').getContent({format: 'raw'}),
-      preprocessed = preprocess(text, html),
-      compiled = _.template(preprocessed, {
-        variable: 'd'
-      });
-  $('#editor-out').html(compiled({}));
+      preprocessed = preprocess(text, html);
+  
+  var compiled = null;
+  try {  
+    compiled = _.template(preprocessed);
+  } catch (e) {
+    compiled = function() { return 'Template compile error: ' + e; };
+    console.error(e);
+  }
+  
+  var processed = '';
+  try {
+    processed = compiled({});
+  } catch (e) {
+    processed = 'Template run error: ' + e;
+    console.error(e);
+  }
+
+  tinymce.get('editor-out').setContent(processed);
+  //$('#editor-out').html(compiled({}));
 }
 
 function preprocess(text, html, delimiters) {
@@ -61,7 +113,14 @@ function preprocess(text, html, delimiters) {
   // with the html in the variable text 
   var preprocessor = getScripts(text, delimiters);
   
-  preprocessor(data);
+  var scriptFn = null;
+  try {
+    preprocessor(data);
+  } catch (e) {
+    data.text = '<p>SCRIPT RUN ERROR: ' + e + '</p><p></p>' + data.text;
+    console.error(e);
+  }
+  
   return data.text;
 }
 
@@ -78,24 +137,24 @@ function getScripts(text, delimiters) {
   }
 
   // Combine multiline strings
-  var index = 0,
-      combined = '';
-  while (str = multilinestr.exec(script)) {
-    var offset = str.index,
-        match = str[0],
-        contents = str[1];
-    combined += script.slice(index, offset) +
-                '"' + contents.replace(newlines, '\\n') + '"';
-    index = offset + match.length;
+  script = script.replace(multilinestr, function(match, str, offset) {
+    return '"' + str.replace(newlines, '\\n') + '"';
+  });
+
+  var scriptFn = null;
+  try {
+    scriptFn = _.template('<% ' + script + ' %>');
+  } catch (e) {
+    scriptFn = function(data) { data.text = '<p>SCRIPT COMPILE ERROR: ' + e + '</p><p></p>' + data.text };
+    console.error(e);
   }
-  combined += script.slice(index);
   
-  return _.template('<% ' + combined + ' %>');
+  return scriptFn;
 }
 
 function removeScripts(html, delimiters) {
   delimiters = _.map(delimiters, _.escape);
-  var matcher = new RegExp(delimiters[0] + '([\\s\\S]*?)' + delimiters[1] + '(?:\\s*<br\\s*/>)?', 'g');
+  var matcher = new RegExp('(?:<p>)?' + delimiters[0] + '([\\s\\S]*?)' + delimiters[1] + '(?:</p>)?(?:\\s*<br\\s*/>)?', 'g');
   return html.replace(matcher, '');
 }
 
