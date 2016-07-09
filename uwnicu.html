@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+  <title>NICU rounding</title>
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7"
+    crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r"
+    crossorigin="anonymous">
+
+  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+  <style>
+    <!-- .row-divider {
+      margin-bottom: 1em;
+    }
+    
+    .with-rborder {
+      border-right: 1px solid #BBB;
+    }
+    
+    .table.table-bordered.table-condensed {
+      margin-bottom: 0px;
+    }
+    
+      .page-break {
+        display: block;
+        page-break-before: always;
+      }
+
+    @media print {
+      body { font-size: 10px; }
+      .dont-print, .dont-print * { display: none !important; }
+      .row-divider, hr { display: none !important; }
+      div   { float: none !important; }
+      table { float: none !important; page-break-after:auto }
+      tr    { page-break-inside:avoid; page-break-after:auto }
+      td    { page-break-inside:avoid; page-break-after:auto }
+      thead { display:table-header-group }
+      tfoot { display:table-footer-group }
+    }
+    -->
+  </style>
+
+</head>
+
+<body>
+
+  <div class="container-fluid">
+    <div class="row dont-print">
+      <div class="col-md-4">
+        <h6>NICU Report from CORES:</h6>
+        <textarea id="nicu-report" class="form-control" rows="2" placeholder="CORES > Print Report > NICU Report > Just Print. Ctrl+A to select all, Ctrl+C to copy. Paste here."></textarea>
+      </div>
+      <div class="col-md-4">
+        <h6>zzTest GenSurg A v2 report from CORES:</h6>
+        <textarea id="surg-report" class="form-control" rows="2" placeholder="CORES > Print Report > zzTest GenSurg A v2 > Just Print. Ctrl+A to select all, Ctrl+C to copy. Paste here."></textarea>
+      </div>
+      <div class="col-md-4">
+        <h6>NeoData Report Sheets:</h6>
+        <textarea id="neodata-report" class="form-control" rows="2" placeholder="NeoData > File > Print Preview > Report Sheets. Ctrl+A to select all, Ctrl+C to copy. Paste here."></textarea>
+      </div>
+    </div>
+    <div class="row row-divider"></div>
+    <div class="row">
+      <div class="col-md-12">
+        <h6 class="dont-print">Rounding Data <small>(missing diaper/stool counts, TF, LP, CBCs and other labs, ABCs)</small>:</h6>
+        <div id="empty" class="text-muted"><small>Paste rounding reports above to show data.</small></div>
+        <div id="processing" class="text-muted" style="display:none;"><small>Processing reports...</small></div>
+      </div>
+    </div>
+    <div id="rounding-data"></div>
+    <div class="row row-divider"></div>
+  </div>
+
+  <script id="tpl-rounding-table" type="text/template">
+    <div class="row"></div>
+      <div class="col-xs-12">
+        <table class="table table-bordered table-condensed">
+          <tbody>
+            <tr><th style="width: 90px">Name</th></tr>
+            <tr><th>Date</th></tr>
+            <tr>
+              <th>Age</th>
+            </tr>
+            <tr>
+              <th>Major Events<br>&nbsp;</th>
+            </tr>
+            <tr>
+              <th>Weight &nbsp;&#x25B3;</th>
+            </tr>
+            <tr>
+              <th>
+                <u>FEN</u><br>
+                <small>
+                  TF/<br>
+                  UOP Stool
+                </small>
+              </th>
+            </tr>
+            <tr>
+              <th>Access</th>
+            </tr>
+            <tr>
+              <th>
+                Feeds<br><br>
+                Lines<br>
+                Labs
+              </th>
+            </tr>
+            <tr>
+              <th>
+                <u>Resp</u> | DX<br>
+                Vent Mode
+              </th>
+            </tr>
+            <tr>
+              <th>
+                <small>
+                  Vt/PIP/PEEP<br>
+                  Rate PS<br>
+                  FiO2,Sats<br>
+                </small>
+                RR<br>
+                Gases<br>
+                Resp Rx<br>
+                ABC's<br>
+              </th>
+            </tr>
+            <tr>
+              <th>
+                <u>CV</u> | HR<br>
+                S/D if PDA<br>
+                Pressors
+              </th>
+            </tr>
+            <tr>
+              <th>
+                <u>GI</u> | Bili<br>
+                PTX
+              </th>
+            </tr>
+            <tr>
+              <th>
+                <u>Heme</u><br>
+                Heme Rx
+              </th>
+            </tr>
+            <tr>
+              <th>
+                <u>ID</u> | Temp<br>
+                Abx
+              </th>
+            </tr>
+            <tr>
+              <th>
+                <u>Neuro</u><br>
+                BIIP<br>
+                OFC
+              </th>
+            </tr>
+            <tr>
+              <th><u>Other Meds</u></th>
+            </tr>
+            <tr>
+              <th><u>To Do</u><br>&nbsp;</th>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="row row-divider"></div>
+  </script>
+  <script id="tpl-rounding-col" type="text/template">
+    <table>
+      <tbody>
+        <tr><td><%= name %></td></tr>
+        <tr><td><%= date %></td></tr>
+        <tr>
+          <td>
+            <div class="row">
+              <div class="col-xs-6 with-rborder">
+                <%= age %>
+              </div>
+              <div class="col-xs-6">
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="row">
+              <div class="col-xs-6 with-rborder">
+                <%= weight %>
+              </div>
+              <div class="col-xs-6">
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="row">
+              <div class="col-xs-7">
+                <table class="table table-bordered table-condensed">
+                  <tr><td><%= TF %></td><td><%= actual_fluids %></td></tr>
+                  <tr><td><%= UOP %></td><td><%= stools %></td></tr>
+                </table>
+              </div>
+              <div class="col-xs-5">
+                <small>
+                  <%= PO_percent %><br>
+                  <%= emesis %>
+                </small>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+        </tr>
+        <tr>
+          <td>
+            <%= feeds %><br>
+            <%= sups %><br>
+            <%= chem %><br>
+            </td>
+        </tr>
+        <tr>
+          <td><%= resp %></td>
+        </tr>
+        <tr>
+          <td>
+            FiO2: <%= fio2 %><br>
+            SpO2: <%= spo2 %><br>
+            RR: <%= rr %><br>
+            <br>
+            <%= gases %><br>
+            ABCs: <%= ABCs %>
+          </td>            
+        </tr>
+        <tr>
+          <td>
+            HR: <%= hr %><br>
+            MAP: <%= map %>
+          </td>
+        </tr>
+        <tr>
+          <td><%= gi %></td>
+        </tr>
+        <tr>
+          <td><%= heme %></td>
+        </tr>
+        <tr>
+          <td>T: <%= temp %></td>
+        </tr>
+        <tr>
+          <td><%= neuro %></td>
+        </tr>
+        <tr>
+          <td><%= meds %></td>
+        </tr>
+        <tr>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </script>
+
+  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <!-- Include all compiled plugins (below), or include individual files as needed -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/lodash/4.13.1/lodash.min.js" crossorigin="anonymous"></script>
+  <script>
+    var $nicuReport = $('#nicu-report');
+    var $surgReport = $('#surg-report');
+    var $roundingData = $('#rounding-data');
+    var $empty = $('#empty');
+    var $processing = $('#processing');
+    var roundingTableTpl = _.template($('#tpl-rounding-table').html());
+    var roundingColTpl = _.template($('#tpl-rounding-col').html());
+    var row = function() { return $('<div class="row"></div>'); }
+    var pagebreak = function() { return $('<div class="page-break">&nbsp;</div>'); }
+     
+    function initUI() {
+      $nicuReport.on('input change', update);
+      $surgReport.on('input change', update);
+      $nicuReport.focus();
+    }
+
+    function update() {
+      var nicu = $nicuReport.val(),
+          surg = $surgReport.val();
+
+      if (!(nicu || surg)) {
+        $empty.show();
+        $processing.hide();
+        $roundingData.hide();
+        return;
+      }
+
+      $empty.hide();
+      $processing.show();
+      $roundingData.hide();
+      
+      var nicuData = parseNicu(nicu),
+        surgData = parseSurg(surg),
+        data = combineData(nicuData, surgData); 
+
+      $roundingData.empty();
+
+      for (var i = 0; i < data.length / 4; i++) {
+        // Page break before every row after the first page
+        if (i > 0) {
+          $roundingData.append('<hr>').append(pagebreak());
+        }
+
+        var $tableContainer = $(roundingTableTpl()),
+            $table = $tableContainer.find('table > tbody').first();
+        
+        for (var j = 0; j < 4; j++) {
+          var idx = i*4+j; 
+          if (idx >= data.length) { 
+            break; 
+          }
+          
+          var $col = $(roundingColTpl(data[idx])).find('tbody').first();
+          t = $table;
+          s= $col
+          addCol($table, $col);
+        }
+  
+        $roundingData.append($tableContainer);
+      }
+
+      $processing.hide();
+      $roundingData.show();
+    }
+
+    function parseNicu(text) {
+      var parts = text.split('MRN: '),
+          dateGroup = text.match(/at *([0-9/]+)/),
+          date = dateGroup && dateGroup[1] || undefined,
+          data = [], i = 0;
+
+      for (i = 1; i < parts.length; i++) {
+        var nameMatch = parts[i-1].match(/[a-zA-Z0-9, _/-]*[\n ]*$/),
+            name = nameMatch && nameMatch[0].trim() || "",
+            mrnMatch = parts[i].match(/^U([0-9]+)/),
+            mrn = mrnMatch && mrnMatch[1] || undefined,
+            weightMatch = parts[i].match(/Weight \(PGC\):\s*([.0-9]+\s*-\s*[0-9/]+)/i),
+            weight = weightMatch && weightMatch[1] || undefined;
+            calcWeightMatch = parts[i].match(/Calc Weight:\s*([.0-9]+)/i),
+            calcWeight = calcWeightMatch && parseFloat(calcWeightMatch[1]) || undefined,
+            medsMatch = parts[i].match(/SCH MEDS\n([\s\S]*?)\nPRN/),
+            meds = medsMatch && medsMatch[1].split('\n') || undefined,
+            dripsMatch = parts[i].match(/DRIPS\n([\s\S]*?)\n\s*\n/),
+            drips = dripsMatch && dripsMatch[1].split('\n') || undefined,
+            sups = spliceSups(meds),
+            biliMatch = parts[i].match(/tb: \[(.*)\]\s*\n/),
+            bili = biliMatch && biliMatch[1] || undefined,
+            giMeds = spliceGIMeds(meds),
+            gi = (bili && ('Bili: ' + bili + '<br>') || '') + (giMeds && giMeds.join(', ') || ''),  
+            heme = spliceFe(meds),
+            neuro = spliceNeuroMeds(meds).concat(spliceNeuroDrips(drips)).join('<br>'),
+            chemMatch = parts[i].match(/Chem7([\s\S]*?)(?=I\/Os)/i),
+            chem = chemMatch &&
+                   chemMatch[1]
+                      .replace(/([0-9]+\/[0-9]+ [0-9]+:[0-9]+)/, '($1)')
+                      .replace(/([0-9]+) +([0-9]+) +([0-9]+) *\n([0-9.]+) +([0-9]+) +([0-9.]+)/, 'Na $1 K $4 Cl $2 HCO3 $5 BUN $3 Cr $6')
+                      .replace(/Ca[\s\n]*MG[\s\n]*Phos[\s\n]*i-STAT[\s\n]*/i, '')
+                      .replace(/Ca[\s\n]*\(Ionized\)[\s\n]*cs[\s\n]*/i, '')
+                      .replace(/cs[\s\n]*Lact: ->/i, '')
+                      .replace(/Lact: ->/, '') ||
+                   undefined,
+            fio2Match = parts[i].match(/O2 Percent - Administered:\s*(.*)\n/),
+            fio2 = fio2Match && fio2Match[1].replace(/([0-9]+)\s+([0-9]+)\s*-\s*([0-9]+)/, '$2-$3 ($1)') || undefined,
+            spo2Match = parts[i].match(/SpO2 %:(.*)\n/i),
+            spo2 = spo2Match && spo2Match[1].replace(/([0-9]+)\s+([0-9]+)\s*-\s*([0-9]+)/, '$2-$3 ($1)') || undefined
+            rrMatch = parts[i].match(/Resp Rate \(br.*?:(.*)\n/i),
+            rr = rrMatch && rrMatch[1].replace(/([0-9]+)\s+([0-9]+)\s*-\s*([0-9]+)/, '$2-$3 ($1)') || undefined,
+            hrMatch = parts[i].match(/Heart Rate.*?:(.*)\n/i),
+            hr = hrMatch && hrMatch[1].replace(/([0-9]+)\s+([0-9]+)\s*-\s*([0-9]+)/, '$2-$3 ($1)') || undefined,
+            mapMatch = parts[i].match(/MAP Non.*?:(.*)\n/i),
+            map = mapMatch && mapMatch[1].replace(/([0-9]+)\s+([0-9]+)\s*-\s*([0-9]+)/, '$2-$3 ($1)') || undefined,
+            tempMatch = parts[i].match(/Temp.*?:(.*)\n/i),
+            temp = tempMatch && tempMatch[1].replace(/([0-9.]+)\s+([0-9.]+)\s*-\s*([0-9.]+)/, '$2-$3 ($1)') || undefined
+            phMatch = parts[i].match(/pH by i-STAT.*?:(.*)\n/i),
+            ph = phMatch && phMatch[1].replace(/([0-9.]+)\s*-\s*(.+)/, '($2) $1') || undefined,
+            pco2Match = parts[i].match(/pCO2 by i-STAT.*?:(.*)\n/i),
+            pco2 = pco2Match && pco2Match[1].replace(/([0-9.]+)\s*-\s*.+/, '$1') || undefined,
+            o2deviceMatch = parts[i].match(/O2 Delivery Device:(.*)/i),
+            o2device = o2deviceMatch && o2deviceMatch[1].trim(),
+            o2rateMatch = parts[i].match(/O2 L\/min:\s*([0-9.]*)/i),
+            o2rate = o2rateMatch && o2rateMatch[1].trim() || '*',
+            ventModeMatch = parts[i].match(/Ventilation Mode:(.*)/i),
+            ventMode = ventModeMatch && ventModeMatch[1].trim(),
+            ventRateMatch = parts[i].match(/AMV Rate:(.*)/i) || '*',
+            ventRate = ventRateMatch && ventRateMatch[1].trim(),
+            peepMatch = parts[i].match(/PEEP Set:\s*([0-9]*)/i),
+            peep = peepMatch && peepMatch[1].trim() || '*',
+            pipMatch = parts[i].match(/PIP:\s*([0-9]*)/i),
+            pip = pipMatch && pipMatch[1].trim() || '*',
+            hfovHzMatch = parts[i].match(/HFOV - Hertz:\s*([0-9]*)/i),
+            hfovHz = hfovHzMatch && hfovHzMatch[1].trim() || '*',
+            hfovAmpMatch = parts[i].match(/HFOV - Amplitude:\s*([0-9]*)/i),
+            hfovAmp = hfovAmpMatch && hfovAmpMatch[1].trim() || '*',
+            hfovMAPMatch = parts[i].match(/HFOV - MAP:\s*([0-9]*)/i),
+            hfovMAP = hfovMAPMatch && hfovMAPMatch[1].trim() || '*',
+            resp = undefined;
+        
+        if (o2device.match(/Room air/i)) {
+          resp = 'RA'
+        } else if (ventMode.match(/HFOV/i)) {
+          resp = ventMode + ' Hz ' + hfovHz + ' Amp ' + hfovAmp + ' MAP ' + hfovMAP;
+        } else if (o2device.match(/Ventilator/i)) {
+          resp = ventMode + ' ' + pip + '/' + peep + 'x' + ventRate;
+        } else if (o2device.match(/HIGH Flow Nasal Cannula/i)) {
+          resp = 'HFNC ' + o2rate + 'L';
+        } else if (o2device.match(/Nasal Cannula/i)) {
+          resp = 'NC ' + o2rate + 'L';
+        }
+
+        // Remove routine orders, like 1-2-3 paste
+        spliceRoutineMeds(meds);
+        // Clean redundant words in meds like Neonatal
+        cleanMeds(meds);
+
+        pt = {
+          name: name, mrn: mrn, date: date,
+          weight: weight, calcWeight: calcWeight,
+          meds: meds, sups: sups, gi: gi,
+          heme: heme, chem: chem,
+          fio2: fio2, spo2: spo2, rr: rr, hr: hr, map: map, temp: temp,
+          gases: ph && ph.trim() && (ph.trim() + '/' + pco2.trim()) || '',
+          neuro: neuro,
+          resp: resp
+        };
+        
+        data.push(pt);
+      }
+
+      return data;
+    }
+
+    function spliceSups(meds) {
+      if (!Array.isArray(meds)) {
+        return []; 
+      }
+      var sups = [];
+      for (var i = meds.length-1; i >= 0; i--) {
+        if (meds[i].match(/Tri-Vi-Sol/i)) {
+          sups.push('TVS') && meds.splice(i, 1);
+        }
+        if (meds[i].match(/vitamin E/i)) {
+          sups.push('VitE') && meds.splice(i, 1);
+        }
+        if (meds[i].match(/vitamin A/i)) {
+          sups.push('VitA') && meds.splice(i, 1);
+        }
+        if (meds[i].match(/MCT oral/i)) {
+          sups.push('MCT') && meds.splice(i, 1);
+        }
+        if (meds[i].match(/Poly-Vi-Sol/i)) {
+          sups.push('PVS') && meds.splice(i, 1);
+        }
+        if (meds[i].match(/• sodium chloride/i)) {
+          sups.push('NaCl') && meds.splice(i, 1);
+        }
+        if (meds[i].match(/potassium chloride/i)) {
+          sups.push('KCl') && meds.splice(i, 1);
+        }
+      }
+      return sups;
+    }
+    function spliceFe(meds) {
+      var fe = '';
+      if (!Array.isArray(meds)) {
+        return fe; 
+      }
+      for (var i = meds.length-1; i >= 0; i--) {
+        if (meds[i].match(/ferrous sulfate/i)) {
+          fe = 'Fe';
+          meds.splice(i, 1);
+        }
+        if (meds[i].match(/iron sucrose/i)) {
+          fe = 'Fe IV';
+          meds.splice(i, 1);
+        }
+      }
+      return fe;
+    }
+    function spliceGIMeds(meds) {
+      if (!Array.isArray(meds)) {
+        return ''; 
+      }
+      var medlist = [];
+      for (var i = meds.length-1; i >= 0; i--) {
+        if (meds[i].match(/bifido/i)) {
+          medlist.push('probiotics') && meds.splice(i, 1);
+        }
+      }
+      return medlist;
+    }
+    function spliceNeuroMeds(meds) {
+      if (!Array.isArray(meds)) {
+        return []; 
+      }
+      var neuromeds = [];
+      for (var i = meds.length-1; i >= 0; i--) {
+        var morphineMatch = meds[i].match(/morphine\s*-.*?([0-9.]+.*?g).*?(Q[0-9]+)/i);
+        if (morphineMatch) {
+          neuromeds.push('morphine (' + morphineMatch[1] + ' ' + morphineMatch[2] + ')');
+          meds.splice(i, 1);
+        }
+        if (meds[i].match(/caffeine/i)) {
+          neuromeds.push('caffeine') && meds.splice(i, 1);
+        }
+      }
+      return neuromeds;
+    }
+    function spliceNeuroDrips(drips) {
+      if (!Array.isArray(drips)) {
+        return []; 
+      }
+      var neurodrips = [];
+      for (var i = drips.length-1; i >= 0; i--) {
+        var morphineMatch = drips[i].match(/morphine\s*-\s*([0-9.]*.*?g)/i);
+        if (morphineMatch) {
+          neurodrips.push('morphine gtt (' + morphineMatch[1] + ')');
+          meds.splice(i, 1);
+        }
+      }
+      return neurodrips;
+    }
+    function spliceRoutineMeds(meds) {
+      if (!Array.isArray(meds)) {
+        return []; 
+      }
+      var medlist = [];
+      for (var i = meds.length-1; i >= 0; i--) {
+        if (meds[i].match(/One Two Three|hepatitis B/i)) {
+          meds.splice(i, 1);
+        }
+      }
+      return medlist;
+    }
+    function cleanMeds(meds) {
+      if (!Array.isArray(meds)) {
+        return []; 
+      }
+      var medlist = [];
+      for (var i = meds.length-1; i >= 0; i--) {
+        meds[i] = meds[i].replace(/- Neonatal /i, '');
+      }
+      return medlist;
+    }
+
+    function parseSurg(text) {
+      var parts = text.split(/\n(?=U[0-9 ]* DOB)/),
+          data = [], i = 0;
+      
+      for (i = 1; i < parts.length; i++) {
+        var nameMatch = parts[i-1].match(/[a-zA-Z0-9, _/-]*[\n ]*$/),
+            name = nameMatch && nameMatch[0].trim() || "",
+            ageMatch = parts[i].match(/Allergy:.*\n+([0-9]+)-/),
+            age = ageMatch && ageMatch[1] || undefined,
+            feedsMatch = parts[i].match(/Feeding Orders.(.*)/i),
+            feeds = feedsMatch && ('<small>' + feedsMatch[1].replace(/Neonatal \/ Infant Feeding Diet - (Preterm|Term|Transitional)/i, '') + '</small>') || undefined,
+            insMatch = parts[i].match(/IN: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i),
+            ins = insMatch && parseInt(insMatch[1]) || undefined,
+            dietMatch = parts[i].match(/Diet: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i),
+            diet = dietMatch && parseInt(dietMatch[1]) || undefined,
+            poPercent = diet && ins && Math.round(diet/ins*100) + '% PO' || 'No PO',
+            outsMatch = parts[i].match(/OUT: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i),
+            outs = outsMatch && parseInt(outsMatch[1]) || undefined,
+            urineMatch = parts[i].match(/GU \/ URINE: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i),
+            urine = urineMatch && parseInt(urineMatch[1]) || undefined
+            emesisMatch = parts[i].match(/Emesis: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i),
+            emesis = emesisMatch && 'em x' || 'No em'
+            ;
+
+        data.push({
+          name: name,
+          age: age,
+          feeds: feeds,
+          ins: ins,
+          PO_percent: poPercent,
+          urine: urine,
+          emesis: emesis,
+        });
+      }
+      
+      return data;
+    }
+
+    function combineData(nicuData, surgData) {
+      var empty = {
+            name: "_", date: "_", age: "_", weight: "*", TF: "&nbsp;", actual_fluids: "&nbsp;", 
+            UOP: "&nbsp;", stools: "&nbsp;", PO_percent: "% PO:", emesis: "_", feeds: "Diet:", sups: "_", 
+            chem: "_", resp: "_", fio2: "_", rr: "_", spo2: "_", gases: "_", ABCs: "*", 
+            gi: "_", hr: "_", map: "_", heme: "_", cbc: "_", temp: "_", neuro: "_",
+            meds: "_",  
+          },
+          data = [], pt;
+
+      for (var i in nicuData) {
+        var nicuEl = nicuData[i],
+            name = nicuEl.name,
+            nameRE = new RegExp(name, 'i'),
+            surgEl = null;
+
+        for (var j in surgData) {
+          if (surgData[j].name && nameRE.exec(surgData[j].name)) {
+            surgEl = surgData[j];
+            continue;
+          }
+        }
+
+        pt = _.defaults(_.clone(nicuEl), surgEl);
+        pt = _.defaults(pt, empty);
+
+        pt.meds = Array.isArray(pt.meds) && pt.meds.join('<br>') || pt.meds;
+        pt.sups = Array.isArray(pt.sups) && pt.sups.join('/') || pt.sups;
+        pt.sups = pt.sups && ('+ ' + pt.sups) || pt.sups;
+        pt.actual_fluids = pt.ins && pt.calcWeight && (pt.ins / pt.calcWeight).toFixed() || pt.actual_fluids;
+        pt.UOP = pt.urine && (pt.urine > 12) && pt.calcWeight && (pt.urine / pt.calcWeight / 24).toFixed(1) || pt.UOP;
+
+        data.push(pt);
+      }
+      return data;
+    }
+
+    function addCol($table, $table2) {
+      var rows = $table.children(),
+      	  rows2 = $table2.children();
+      _.each(rows, function(r, i) {
+          if (i < rows2.length) {
+            $(r).append($(rows2[i]).children());
+          }
+      });
+    }
+
+    $(function() {
+      initUI();
+    });
+  </script>
+
+
+</body>
+
+</html>
