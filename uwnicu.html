@@ -267,7 +267,10 @@
           <td><%= heme %></td>
         </tr>
         <tr>
-          <td>T: <%= temp %></td>
+          <td>
+            T: <%= temp %>
+            <%= abx %>
+          </td>
         </tr>
         <tr>
           <td><%= neuro %></td>
@@ -361,24 +364,21 @@
           data = [], i = 0;
 
       for (i = 1; i < parts.length; i++) {
-        var nameMatch = parts[i-1].match(/[a-zA-Z0-9, _/-]*[\n ]*$/),
-            name = nameMatch && nameMatch[0].trim() || "",
-            mrnMatch = parts[i].match(/^U([0-9]+)/),
-            mrn = mrnMatch && mrnMatch[1] || undefined,
-            weightMatch = parts[i].match(/Weight \(PGC\):\s*([.0-9]+\s*-\s*[0-9/]+)/i),
-            weight = weightMatch && weightMatch[1] || undefined;
-            calcWeightMatch = parts[i].match(/Calc Weight:\s*([.0-9]+)/i),
-            calcWeight = calcWeightMatch && parseFloat(calcWeightMatch[1]) || undefined,
-            medsMatch = parts[i].match(/SCH MEDS\n([\s\S]*?)\nPRN/),
-            meds = medsMatch && medsMatch[1].split('\n') || undefined,
-            dripsMatch = parts[i].match(/DRIPS\n([\s\S]*?)\n\s*\n/),
-            drips = dripsMatch && dripsMatch[1].split('\n') || undefined,
+        var intRangeRe = [/([0-9]+)\s+([0-9]+)\s*-\s*([0-9]+)/, '$2-$3 ($1)'];
+
+        var name = extractReGroup(parts[i-1], /([a-zA-Z0-9, _/-]*)[\n ]*$/),
+            mrn = extractReGroup(parts[i], /^U([0-9]+)/),
+            weight = extractReGroup(parts[i], /Weight \(PGC\):\s*([.0-9]+\s*-\s*[0-9/]+)/i),
+            calcWeight = extractReGroup(parts[i], /Calc Weight:\s*([.0-9]+)/i),
+            medsList = extractReGroup(parts[i], /SCH MEDS\n([\s\S]*?)\nPRN/),
+            meds = medsList && medsList.split('\n') || undefined,
+            dripsList = extractReGroup(parts[i], /DRIPS\n([\s\S]*?)\n\s*\n/),
+            drips = dripsList && dripsList.split('\n') || undefined,
             sups = spliceSups(meds),
-            biliMatch = parts[i].match(/tb: \[(.*)\]\s*\n/),
-            bili = biliMatch && biliMatch[1] || undefined,
+            bili = extractReGroup(parts[i], /tb: \[(.*)\]\s*\n/),
             giMeds = spliceGIMeds(meds),
             gi = (bili && ('Bili: ' + bili + '<br>') || '') + (giMeds && giMeds.join(', ') || ''),  
-            heme = spliceFe(meds),
+            heme = spliceFe(meds).join(', '),
             neuro = spliceNeuroMeds(meds).concat(spliceNeuroDrips(drips)).join('<br>'),
             chemMatch = parts[i].match(/Chem7([\s\S]*?)(?=I\/Os)/i),
             chem = chemMatch &&
@@ -390,40 +390,24 @@
                       .replace(/cs[\s\n]*Lact: ->/i, '')
                       .replace(/Lact: ->/, '') ||
                    undefined,
-            fio2Match = parts[i].match(/O2 Percent - Administered:\s*(.*)\n/),
-            fio2 = fio2Match && fio2Match[1].replace(/([0-9]+)\s+([0-9]+)\s*-\s*([0-9]+)/, '$2-$3 ($1)') || undefined,
-            spo2Match = parts[i].match(/SpO2 %:(.*)\n/i),
-            spo2 = spo2Match && spo2Match[1].replace(/([0-9]+)\s+([0-9]+)\s*-\s*([0-9]+)/, '$2-$3 ($1)') || undefined
-            rrMatch = parts[i].match(/Resp Rate \(br.*?:(.*)\n/i),
-            rr = rrMatch && rrMatch[1].replace(/([0-9]+)\s+([0-9]+)\s*-\s*([0-9]+)/, '$2-$3 ($1)') || undefined,
-            hrMatch = parts[i].match(/Heart Rate.*?:(.*)\n/i),
-            hr = hrMatch && hrMatch[1].replace(/([0-9]+)\s+([0-9]+)\s*-\s*([0-9]+)/, '$2-$3 ($1)') || undefined,
-            mapMatch = parts[i].match(/MAP Non.*?:(.*)\n/i),
-            map = mapMatch && mapMatch[1].replace(/([0-9]+)\s+([0-9]+)\s*-\s*([0-9]+)/, '$2-$3 ($1)') || undefined,
-            tempMatch = parts[i].match(/Temp.*?:(.*)\n/i),
-            temp = tempMatch && tempMatch[1].replace(/([0-9.]+)\s+([0-9.]+)\s*-\s*([0-9.]+)/, '$2-$3 ($1)') || undefined
-            phMatch = parts[i].match(/pH by i-STAT.*?:(.*)\n/i),
-            ph = phMatch && phMatch[1].replace(/([0-9.]+)\s*-\s*(.+)/, '($2) $1') || undefined,
-            pco2Match = parts[i].match(/pCO2 by i-STAT.*?:(.*)\n/i),
-            pco2 = pco2Match && pco2Match[1].replace(/([0-9.]+)\s*-\s*.+/, '$1') || undefined,
-            o2deviceMatch = parts[i].match(/O2 Delivery Device:(.*)/i),
-            o2device = o2deviceMatch && o2deviceMatch[1].trim(),
-            o2rateMatch = parts[i].match(/O2 L\/min:\s*([0-9.]*)/i),
-            o2rate = o2rateMatch && o2rateMatch[1].trim() || '*',
-            ventModeMatch = parts[i].match(/Ventilation Mode:(.*)/i),
-            ventMode = ventModeMatch && ventModeMatch[1].trim(),
-            ventRateMatch = parts[i].match(/AMV Rate:(.*)/i) || '*',
-            ventRate = ventRateMatch && ventRateMatch[1].trim(),
-            peepMatch = parts[i].match(/PEEP Set:\s*([0-9]*)/i),
-            peep = peepMatch && peepMatch[1].trim() || '*',
-            pipMatch = parts[i].match(/PIP:\s*([0-9]*)/i),
-            pip = pipMatch && pipMatch[1].trim() || '*',
-            hfovHzMatch = parts[i].match(/HFOV - Hertz:\s*([0-9]*)/i),
-            hfovHz = hfovHzMatch && hfovHzMatch[1].trim() || '*',
-            hfovAmpMatch = parts[i].match(/HFOV - Amplitude:\s*([0-9]*)/i),
-            hfovAmp = hfovAmpMatch && hfovAmpMatch[1].trim() || '*',
-            hfovMAPMatch = parts[i].match(/HFOV - MAP:\s*([0-9]*)/i),
-            hfovMAP = hfovMAPMatch && hfovMAPMatch[1].trim() || '*',
+            fio2 = extractReGroup(parts[i], /O2 Percent - Administered:\s*(.*)/, intRangeRe),
+            spo2 = extractReGroup(parts[i], /SpO2 %:(.*)/i, intRangeRe),
+            rr = extractReGroup(parts[i], /Resp Rate \(br.*?:(.*)/i, intRangeRe),
+            hr = extractReGroup(parts[i], /Heart Rate.*?:(.*)/i, intRangeRe),
+            map = extractReGroup(parts[i], /MAP Non.*?:(.*)/i, intRangeRe),
+            temp = extractReGroup(parts[i], /Temp.*?:(.*)/i, /([0-9.]+)\s+([0-9.]+)\s*-\s*([0-9.]+)/, '$2-$3 ($1)'),
+            abx = spliceAbx(meds),
+            ph = extractReGroup(parts[i], /pH by i-STAT.*?:(.*)\n/i, /([0-9.]+)\s*-\s*(.+)/, '($2) $1'),
+            pco2 = extractReGroup(parts[i], /pCO2 by i-STAT.*?:\s*([0-9.]+)/i),
+            o2device = extractReGroup(parts[i], /O2 Delivery Device:(.*)/i),
+            o2rate = extractReGroup(parts[i], /O2 L\/min:\s*([0-9.]*)/i),
+            ventMode = extractReGroup(parts[i], /Ventilation Mode:(.*)/i) || '*',
+            ventRate = extractReGroup(parts[i], /AMV Rate:(.*)/i) || '*',
+            peep = extractReGroup(parts[i], /PEEP Set:\s*([0-9]*)/i) || '*',
+            pip = extractReGroup(parts[i], /PIP:\s*([0-9]*)/i) || '*',
+            hfovHz = extractReGroup(parts[i], /HFOV - Hertz:\s*([0-9]*)/i) || '*',
+            hfovAmp = extractReGroup(parts[i], /HFOV - Amplitude:\s*([0-9]*)/i) || '*',
+            hfovMAP = extractReGroup(parts[i], /HFOV - MAP:\s*([0-9]*)/i) || '*',
             resp = undefined;
         
         if (o2device.match(/Room air/i)) {
@@ -445,11 +429,13 @@
 
         pt = {
           name: name, mrn: mrn, date: date,
-          weight: weight, calcWeight: calcWeight,
+          weight: weight,
+          calcWeight: calcWeight && parseFloat(calcWeight) || undefined,
           meds: meds, sups: sups, gi: gi,
           heme: heme, chem: chem,
           fio2: fio2, spo2: spo2, rr: rr, hr: hr, map: map, temp: temp,
-          gases: ph && ph.trim() && (ph.trim() + '/' + pco2.trim()) || '',
+          abx: abx && abx.join(', ') || undefined,
+          gases: ph && (ph + '/' + pco2) || '',
           neuro: neuro,
           resp: resp
         };
@@ -460,117 +446,100 @@
       return data;
     }
 
-    function spliceSups(meds) {
-      if (!Array.isArray(meds)) {
-        return []; 
+    function extractReGroup(s, regex, replaceSpec) {
+      // Get the first group matched in the regex or undefined
+      var match = s.match(regex),
+          ret = match && match[1];
+
+      if (replaceSpec && ret) {
+        ret = ret.replace(replaceSpec[0], replaceSpec[1]);
       }
-      var sups = [];
+
+      return ret && ret.trim() || undefined;
+    }
+
+    function spliceMeds(meds, mapping) {
+      if (!Array.isArray(meds)) { return []; }
+      var mapped = [];
       for (var i = meds.length-1; i >= 0; i--) {
-        if (meds[i].match(/Tri-Vi-Sol/i)) {
-          sups.push('TVS') && meds.splice(i, 1);
-        }
-        if (meds[i].match(/vitamin E/i)) {
-          sups.push('VitE') && meds.splice(i, 1);
-        }
-        if (meds[i].match(/vitamin A/i)) {
-          sups.push('VitA') && meds.splice(i, 1);
-        }
-        if (meds[i].match(/MCT oral/i)) {
-          sups.push('MCT') && meds.splice(i, 1);
-        }
-        if (meds[i].match(/Poly-Vi-Sol/i)) {
-          sups.push('PVS') && meds.splice(i, 1);
-        }
-        if (meds[i].match(/• sodium chloride/i)) {
-          sups.push('NaCl') && meds.splice(i, 1);
-        }
-        if (meds[i].match(/potassium chloride/i)) {
-          sups.push('KCl') && meds.splice(i, 1);
+        for (var re in mapping) {
+          if (meds[i].match(re)) {
+            mapped.push(mapping[re]) && meds.splice(i, 1);
+          }
         }
       }
-      return sups;
+      return mapped;
+    }
+
+    
+    function spliceSups(meds) {
+      return spliceMeds(meds, {
+        /Tri-Vi-Sol/i: 'TVS',
+        /vitamin E/i: 'VitE',
+        /vitamin A/i: 'VitA',
+        /MCT oral/i: 'MCT',
+        /Poly-Vi-Sol/i: 'PVS',
+        /• sodium chloride/i: 'NaCl',
+        /potassium chloride/i: 'KCl',
+      }
     }
     function spliceFe(meds) {
-      var fe = '';
-      if (!Array.isArray(meds)) {
-        return fe; 
-      }
-      for (var i = meds.length-1; i >= 0; i--) {
-        if (meds[i].match(/ferrous sulfate/i)) {
-          fe = 'Fe';
-          meds.splice(i, 1);
-        }
-        if (meds[i].match(/iron sucrose/i)) {
-          fe = 'Fe IV';
-          meds.splice(i, 1);
-        }
-      }
-      return fe;
+      return spliceMeds(meds, {
+        /ferrous sulfate/i: 'Fe',
+        /iron sucrose/i: 'Fe IV',
+      });
     }
     function spliceGIMeds(meds) {
-      if (!Array.isArray(meds)) {
-        return ''; 
-      }
-      var medlist = [];
-      for (var i = meds.length-1; i >= 0; i--) {
-        if (meds[i].match(/bifido/i)) {
-          medlist.push('probiotics') && meds.splice(i, 1);
-        }
-      }
-      return medlist;
+      return spliceMeds(meds, {
+        /bifido/i: 'probiotics',
+      });
     }
     function spliceNeuroMeds(meds) {
-      if (!Array.isArray(meds)) {
-        return []; 
-      }
-      var neuromeds = [];
+      var medlist = spliceMeds(meds, {
+        /caffeine/i:'caffeine',
+      });
       for (var i = meds.length-1; i >= 0; i--) {
         var morphineMatch = meds[i].match(/morphine\s*-.*?([0-9.]+.*?g).*?(Q[0-9]+)/i);
         if (morphineMatch) {
-          neuromeds.push('morphine (' + morphineMatch[1] + ' ' + morphineMatch[2] + ')');
+          medlist.push('morphine (' + morphineMatch[1] + ' ' + morphineMatch[2] + ')');
           meds.splice(i, 1);
         }
-        if (meds[i].match(/caffeine/i)) {
-          neuromeds.push('caffeine') && meds.splice(i, 1);
-        }
       }
-      return neuromeds;
+      return medlist;
     }
     function spliceNeuroDrips(drips) {
       if (!Array.isArray(drips)) {
         return []; 
       }
-      var neurodrips = [];
+      var medlist = [];
       for (var i = drips.length-1; i >= 0; i--) {
         var morphineMatch = drips[i].match(/morphine\s*-\s*([0-9.]*.*?g)/i);
         if (morphineMatch) {
-          neurodrips.push('morphine gtt (' + morphineMatch[1] + ')');
-          meds.splice(i, 1);
-        }
-      }
-      return neurodrips;
-    }
-    function spliceRoutineMeds(meds) {
-      if (!Array.isArray(meds)) {
-        return []; 
-      }
-      var medlist = [];
-      for (var i = meds.length-1; i >= 0; i--) {
-        if (meds[i].match(/One Two Three|hepatitis B/i)) {
-          meds.splice(i, 1);
+          medlist.push('morphine gtt (' + morphineMatch[1] + ')');
+          drips.splice(i, 1);
         }
       }
       return medlist;
     }
+    function spliceAbx(meds) {
+      return spliceMeds(meds, {
+        /ampicillin/i: 'amp',
+        /gentamicin/i: 'gent',
+        /meropenem/i: 'meropenem',
+        /fluconazole/i: 'fluconazole',
+      });
+    }
+    function spliceRoutineMeds(meds) {
+      return spliceMeds(meds, {
+        /One Two Three/i: '1-2-3 paste',
+        /hepatitis B/i: 'hep B',
+      });
+    }
     function cleanMeds(meds) {
-      if (!Array.isArray(meds)) {
-        return []; 
-      }
-      var medlist = [];
+      if (!Array.isArray(meds)) { return []; }
       for (var i = meds.length-1; i >= 0; i--) {
         meds[i] = meds[i].replace(/- Neonatal /i, '');
       }
-      return medlist;
     }
 
     function parseSurg(text) {
@@ -578,33 +547,27 @@
           data = [], i = 0;
       
       for (i = 1; i < parts.length; i++) {
-        var nameMatch = parts[i-1].match(/[a-zA-Z0-9, _/-]*[\n ]*$/),
-            name = nameMatch && nameMatch[0].trim() || "",
-            ageMatch = parts[i].match(/Allergy:.*\n+([0-9]+)-/),
-            age = ageMatch && ageMatch[1] || undefined,
-            feedsMatch = parts[i].match(/Feeding Orders.(.*)/i),
-            feeds = feedsMatch && ('<small>' + feedsMatch[1].replace(/Neonatal \/ Infant Feeding Diet - (Preterm|Term|Transitional)/i, '') + '</small>') || undefined,
-            insMatch = parts[i].match(/IN: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i),
-            ins = insMatch && parseInt(insMatch[1]) || undefined,
-            dietMatch = parts[i].match(/Diet: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i),
-            diet = dietMatch && parseInt(dietMatch[1]) || undefined,
-            poPercent = diet && ins && Math.round(diet/ins*100) + '% PO' || 'No PO',
-            outsMatch = parts[i].match(/OUT: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i),
-            outs = outsMatch && parseInt(outsMatch[1]) || undefined,
-            urineMatch = parts[i].match(/GU \/ URINE: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i),
-            urine = urineMatch && parseInt(urineMatch[1]) || undefined
-            emesisMatch = parts[i].match(/Emesis: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i),
-            emesis = emesisMatch && 'em x' || 'No em'
-            ;
+        var name = extractReGroup(parts[i-1], /([a-zA-Z0-9, _/-]*)[\n ]*$/),
+            age = extractReGroup(parts[i], /Allergy:.*\n+([0-9]+)-/),
+            feeds = extractReGroup(parts[i], /Feeding Orders.(.*)/i),
+            ins = extractReGroup(parts[i], /IN: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i,
+            diet = extractReGroup(parts[i], /Diet: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i,
+            outs = extractReGroup(parts[i], /OUT: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i),
+            urine = extractReGroup(parts[i], /GU \/ URINE: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i),
+            emesis = extractReGroup(parts[i], /Emesis: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i);
+
+        feeds = feeds && ('<small>' + feeds.replace(/Neonatal \/ Infant Feeding Diet - (Preterm|Term|Transitional)/i, '') + '</small>') || undefined,
+        ins = ins && parseInt(ins) || undefined;
+        diet = diet && parseInt(diet) || undefined;
+        urine = urine && parseInt(urine) || undefined;
+        emesis = emesis && 'em x' || undefined;
+
+        var poPercent = diet && ins && Math.round(diet/ins*100) + '% PO' || 'No PO';
 
         data.push({
-          name: name,
-          age: age,
-          feeds: feeds,
-          ins: ins,
-          PO_percent: poPercent,
-          urine: urine,
-          emesis: emesis,
+          name: name, age: age,
+          feeds: feeds, ins: ins, PO_percent: poPercent,
+          urine: urine, emesis: emesis,
         });
       }
       
@@ -616,7 +579,7 @@
             name: "_", date: "_", age: "_", weight: "*", TF: "&nbsp;", actual_fluids: "&nbsp;", 
             UOP: "&nbsp;", stools: "&nbsp;", PO_percent: "% PO:", emesis: "_", feeds: "Diet:", sups: "_", 
             chem: "_", resp: "_", fio2: "_", rr: "_", spo2: "_", gases: "_", ABCs: "*", 
-            gi: "_", hr: "_", map: "_", heme: "_", cbc: "_", temp: "_", neuro: "_",
+            gi: "_", hr: "_", map: "_", heme: "_", cbc: "_", temp: "_", abx: "", neuro: "_",
             meds: "_",  
           },
           data = [], pt;
