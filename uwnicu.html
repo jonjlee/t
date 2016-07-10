@@ -470,9 +470,10 @@
       if (!Array.isArray(meds)) { return []; }
       var mapped = [];
       for (var i = meds.length-1; i >= 0; i--) {
-        for (var re in mapping) {
-          if (meds[i].match(re)) {
-            mapped.push(mapping[re]) && meds.splice(i, 1);
+        for (var m in mapping) {
+          if (meds[i].match(mapping[m])) {
+            mapped.push(m) && meds.splice(i, 1);
+            break;
           }
         }
       }
@@ -482,29 +483,29 @@
     
     function spliceSups(meds) {
       return spliceMeds(meds, {
-        /Tri-Vi-Sol/i: 'TVS',
-        /vitamin E/i: 'VitE',
-        /vitamin A/i: 'VitA',
-        /MCT oral/i: 'MCT',
-        /Poly-Vi-Sol/i: 'PVS',
-        /• sodium chloride/i: 'NaCl',
-        /potassium chloride/i: 'KCl',
-      }
+        'TVS': /Tri-Vi-Sol/i,
+        'VitE': /vitamin E/i,
+        'VitA': /vitamin A/i,
+        'MCT': /MCT oral/i,
+        'PVS': /Poly-Vi-Sol/i,
+        'NaCl': /• sodium chloride/i,
+        'KCl': /potassium chloride/i,
+      });
     }
     function spliceFe(meds) {
       return spliceMeds(meds, {
-        /ferrous sulfate/i: 'Fe',
-        /iron sucrose/i: 'Fe IV',
+        'Fe': /ferrous sulfate/i,
+        'Fe IV': /iron sucrose/i,
       });
     }
     function spliceGIMeds(meds) {
       return spliceMeds(meds, {
-        /bifido/i: 'probiotics',
+        'probiotics': /bifido/i
       });
     }
     function spliceNeuroMeds(meds) {
       var medlist = spliceMeds(meds, {
-        /caffeine/i:'caffeine',
+        'caffeine': /caffeine/i,
       });
       for (var i = meds.length-1; i >= 0; i--) {
         var morphineMatch = meds[i].match(/morphine\s*-.*?([0-9.]+.*?g).*?(Q[0-9]+)/i);
@@ -531,16 +532,16 @@
     }
     function spliceAbx(meds) {
       return spliceMeds(meds, {
-        /ampicillin/i: 'amp',
-        /gentamicin/i: 'gent',
-        /meropenem/i: 'meropenem',
-        /fluconazole/i: 'fluconazole',
+        'amp': /ampicillin/i,
+        'gent': /gentamicin/i,
+        'meropenem': /meropenem/i,
+        'fluconazole': /fluconazole/i,
       });
     }
     function spliceRoutineMeds(meds) {
       return spliceMeds(meds, {
-        /One Two Three/i: '1-2-3 paste',
-        /hepatitis B/i: 'hep B',
+        '1-2-3 paste': /One Two Three/i,
+        'hep B': /hepatitis B/i,
       });
     }
     function cleanMeds(meds) {
@@ -558,17 +559,17 @@
         var name = extractReGroup(parts[i-1], /([a-zA-Z0-9, _/-]*)[\n ]*$/),
             age = extractReGroup(parts[i], /Allergy:.*\n+([0-9]+)-/),
             feeds = extractReGroup(parts[i], /Feeding Orders.(.*)/i),
-            ins = extractReGroup(parts[i], /IN: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i,
-            diet = extractReGroup(parts[i], /Diet: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i,
-            outs = extractReGroup(parts[i], /OUT: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i),
-            urine = extractReGroup(parts[i], /GU \/ URINE: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i),
-            emesis = extractReGroup(parts[i], /Emesis: [0-9]+ ⁄ [0-9]+ ⁄ ([0-9]+)/i);
+            ins = extractReGroup(parts[i], /IN: [0-9]+ \⁄ [0-9]+ \⁄ ([0-9]+)/i),
+            diet = extractReGroup(parts[i], /Diet: [0-9]+ \⁄ [0-9]+ \⁄ ([0-9]+)/i),
+            outs = extractReGroup(parts[i], /OUT: [0-9]+ \⁄ [0-9]+ \⁄ ([0-9]+)/i),
+            urine = extractReGroup(parts[i], /GU \/ URINE: [0-9]+ \⁄ [0-9]+ \⁄ ([0-9]+)/i),
+            emesis = extractReGroup(parts[i], /Emesis: [0-9]+ \⁄ [0-9]+ \⁄ ([0-9]+)/i);
 
         feeds = feeds && ('<small>' + feeds.replace(/Neonatal \/ Infant Feeding Diet - (Preterm|Term|Transitional)/i, '') + '</small>') || undefined,
         ins = ins && parseInt(ins) || undefined;
         diet = diet && parseInt(diet) || undefined;
         urine = urine && parseInt(urine) || undefined;
-        emesis = emesis && 'em x' || undefined;
+        emesis = emesis && 'em x' || 'No emesis';
 
         var poPercent = diet && ins && Math.round(diet/ins*100) + '% PO' || 'No PO';
 
@@ -586,7 +587,7 @@
       var empty = {
             name: "_", date: "_", age: "_", weight: "*", TF: "&nbsp;", actual_fluids: "&nbsp;", 
             UOP: "&nbsp;", stools: "&nbsp;", PO_percent: "% PO:", emesis: "_", feeds: "Diet:", sups: "_", 
-            chem: "_", resp: "_", fio2: "_", rr: "_", spo2: "_", gases: "_", ABCs: "*", 
+            chem: "&nbsp;", resp: "_", fio2: "_", rr: "_", spo2: "_", gases: "_", ABCs: "*", 
             gi: "_", hr: "_", map: "_", heme: "_", cbc: "_", temp: "_", abx: "", neuro: "_",
             meds: "_",  
           },
