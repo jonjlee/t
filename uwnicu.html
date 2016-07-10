@@ -76,7 +76,7 @@
     <div class="row row-divider"></div>
     <div class="row">
       <div class="col-md-12">
-        <h6 class="dont-print">Rounding Data <small>(missing diaper/stool counts, TF, LP, CBCs and other labs, ABCs)</small>:</h6>
+        <h6 class="dont-print">Rounding Data <small>(missing total fluids, diaper/stool counts, ABCs, liquid protein, labs other than cbc/chem)</small>:</h6>
         <div id="empty" class="text-muted"><small>Paste rounding reports above to show data.</small></div>
         <div id="processing" class="text-muted" style="display:none;"><small>Processing reports...</small></div>
       </div>
@@ -381,12 +381,12 @@
             bili = biliVal && ('(' + biliDate + ') ' + biliVal) || undefined,
             giMeds = spliceGIMeds(meds),
             gi = (bili && ('Bili: ' + bili + '<br>') || '') + (giMeds && giMeds.join(', ') || ''),  
-            heme = spliceFe(meds).join(', '),
             neuro = spliceNeuroMeds(meds).concat(spliceNeuroDrips(drips)).join('<br>'),
             cbcMatch = extractReGroup(parts[i], /CBC ([\s\S]*?)(?=Chem7)/i),
             cbc = cbcMatch && cbcMatch
                       .replace(/^.*=([0-9]+\/[0-9]+ [0-9]+:[0-9]+)[\s\S]*?\[([0-9.]+)\][\s\S]*?\[([0-9.]+)\][\s\S]*?\[([0-9.]+)\][\s\S]*?\[([0-9.]+)\][\s\S]*/, 'CBC ($1): WBC $2 Hb $3 Hct $4 Plt $5')
                     || undefined,
+            heme = (cbc && (cbc + '<br>') || '') + spliceFe(meds).join(', '),
             chemMatch = extractReGroup(parts[i], /Chem7([\s\S]*?)(?=I\/Os)/i),
             chem = chemMatch && chemMatch
                       .replace(/([0-9]+\/[0-9]+ [0-9]+:[0-9]+)/, '($1)')
