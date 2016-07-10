@@ -401,9 +401,9 @@
             rr = extractReGroup(parts[i], /Resp Rate \(br.*?:(.*)/i, intRangeRe),
             hr = extractReGroup(parts[i], /Heart Rate.*?:(.*)/i, intRangeRe),
             map = extractReGroup(parts[i], /MAP Non.*?:(.*)/i, intRangeRe),
-            temp = extractReGroup(parts[i], /Temp.*?:(.*)/i, /([0-9.]+)\s+([0-9.]+)\s*-\s*([0-9.]+)/, '$2-$3 ($1)'),
+            temp = extractReGroup(parts[i], /Temp.*?:(.*)/i, [/([0-9.]+)\s+([0-9.]+)\s*-\s*([0-9.]+)/, '$2-$3 ($1)']),
             abx = spliceAbx(meds),
-            ph = extractReGroup(parts[i], /pH by i-STAT.*?:(.*)\n/i, /([0-9.]+)\s*-\s*(.+)/, '($2) $1'),
+            ph = extractReGroup(parts[i], /pH by i-STAT.*?:(.*)\n/i, [/([0-9.]+)\s*-\s*(.+)/, '($2) $1']),
             pco2 = extractReGroup(parts[i], /pCO2 by i-STAT.*?:\s*([0-9.]+)/i),
             o2device = extractReGroup(parts[i], /O2 Delivery Device:(.*)/i),
             o2rate = extractReGroup(parts[i], /O2 L\/min:\s*([0-9.]*)/i),
@@ -609,8 +609,8 @@
         pt = _.defaults(_.clone(nicuEl), surgEl);
         pt = _.defaults(pt, empty);
 
-        pt.meds = Array.isArray(pt.meds) && pt.meds.join('<br>') || pt.meds;
-        pt.sups = Array.isArray(pt.sups) && pt.sups.join('/') || pt.sups;
+        pt.meds = Array.isArray(pt.meds) && (pt.meds.length > 0) && pt.meds.join('<br>') || pt.meds;
+        pt.sups = Array.isArray(pt.sups) && (pt.sups.length > 0) && pt.sups.join('/') || pt.sups;
         pt.sups = pt.sups && ('+ ' + pt.sups) || pt.sups;
         pt.actual_fluids = pt.ins && pt.calcWeight && (pt.ins / pt.calcWeight).toFixed() || pt.actual_fluids;
         pt.UOP = pt.urine && (pt.urine > 12) && pt.calcWeight && (pt.urine / pt.calcWeight / 24).toFixed(1) || pt.UOP;
