@@ -375,21 +375,27 @@
             dripsList = extractReGroup(parts[i], /DRIPS\n([\s\S]*?)\n\s*\n/),
             drips = dripsList && dripsList.split('\n') || undefined,
             sups = spliceSups(meds),
-            bili = extractReGroup(parts[i], /tb: \[(.*)\]\s*\n/),
+            biliMatch = extractReGroup(parts[i], /Labs ([\s\S]*?tb: [0-9.]*)/i),
+            biliDate = extractReGroup(biliMatch, /([0-9]+\/[0-9]+ [0-9]+:[0-9]+)/),
+            biliVal = extractReGroup(biliMatch, /tb: ([0-9.]*)/i),
+            bili = biliVal && ('(' + biliDate + ') ' + biliVal) || undefined,
             giMeds = spliceGIMeds(meds),
             gi = (bili && ('Bili: ' + bili + '<br>') || '') + (giMeds && giMeds.join(', ') || ''),  
             heme = spliceFe(meds).join(', '),
             neuro = spliceNeuroMeds(meds).concat(spliceNeuroDrips(drips)).join('<br>'),
-            chemMatch = parts[i].match(/Chem7([\s\S]*?)(?=I\/Os)/i),
-            chem = chemMatch &&
-                   chemMatch[1]
+            cbcMatch = extractReGroup(parts[i], /CBC ([\s\S]*?)(?=Chem7)/i),
+            cbc = cbcMatch && cbcMatch
+                      .replace(/^.*=([0-9]+\/[0-9]+ [0-9]+:[0-9]+)[\s\S]*?\[([0-9.]+)\][\s\S]*?\[([0-9.]+)\][\s\S]*?\[([0-9.]+)\][\s\S]*?\[([0-9.]+)\][\s\S]*/, 'CBC ($1): WBC $2 Hb $3 Hct $4 Plt $5')
+                    || undefined,
+            chemMatch = extractReGroup(parts[i], /Chem7([\s\S]*?)(?=I\/Os)/i),
+            chem = chemMatch && chemMatch
                       .replace(/([0-9]+\/[0-9]+ [0-9]+:[0-9]+)/, '($1)')
                       .replace(/([0-9]+) +([0-9]+) +([0-9]+) *\n([0-9.]+) +([0-9]+) +([0-9.]+)/, 'Na $1 K $4 Cl $2 HCO3 $5 BUN $3 Cr $6')
                       .replace(/Ca[\s\n]*MG[\s\n]*Phos[\s\n]*i-STAT[\s\n]*/i, '')
                       .replace(/Ca[\s\n]*\(Ionized\)[\s\n]*cs[\s\n]*/i, '')
                       .replace(/cs[\s\n]*Lact: ->/i, '')
-                      .replace(/Lact: ->/, '') ||
-                   undefined,
+                      .replace(/Lact: ->/, '')
+                    || undefined,
             fio2 = extractReGroup(parts[i], /O2 Percent - Administered:\s*(.*)/, intRangeRe),
             spo2 = extractReGroup(parts[i], /SpO2 %:(.*)/i, intRangeRe),
             rr = extractReGroup(parts[i], /Resp Rate \(br.*?:(.*)/i, intRangeRe),
@@ -447,6 +453,8 @@
     }
 
     function extractReGroup(s, regex, replaceSpec) {
+      if (!s) { return undefined; }
+      
       // Get the first group matched in the regex or undefined
       var match = s.match(regex),
           ret = match && match[1];
