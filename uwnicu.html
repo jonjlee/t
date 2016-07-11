@@ -428,6 +428,8 @@
             ventRate = extractReGroup(parts[i], /AMV Rate:(.*)/i) || '*',
             peep = extractReGroup(parts[i], /PEEP Set:\s*([0-9]*)/i) || '*',
             pip = extractReGroup(parts[i], /PIP:\s*([0-9]*)/i) || '*',
+            TVmL = extractReGroup(parts[i], /Tidal Volume - Set:\s*([0-9.]+)/i) || '',
+            tv = TVmL && calcWeight && (TVmL + ' (' + (TVmL/calcWeight).toFixed(1) + 'mL/kg)') || TVmL, 
             hfovHz = extractReGroup(parts[i], /HFOV - Hertz:\s*([0-9]*)/i) || '*',
             hfovAmp = extractReGroup(parts[i], /HFOV - Amplitude:\s*([0-9]*)/i) || '*',
             hfovMAP = extractReGroup(parts[i], /HFOV - MAP:\s*([0-9]*)/i) || '*',
@@ -438,7 +440,7 @@
         } else if (ventMode.match(/HFOV/i)) {
           resp = ventMode + ' Hz ' + hfovHz + ' Amp ' + hfovAmp + ' MAP ' + hfovMAP;
         } else if (o2device.match(/Ventilator/i)) {
-          resp = ventMode + ' ' + pip + '/' + peep + 'x' + ventRate;
+          resp = ventMode + ' ' + pip + '/' + peep + 'x' + ventRate + (tv && (' TV' + tv) || '');
         } else if (o2device.match(/HIGH Flow Nasal Cannula/i)) {
           resp = 'HFNC ' + o2rate + 'L';
         } else if (o2device.match(/Nasal Cannula/i)) {
@@ -609,7 +611,7 @@
         var mrn = extractReGroup(parts[i], /([0-9]+) On /) || extractReGroup(parts[i], /([0-9]+) *WT:/),
             name = extractReGroup(parts[i], /([A-Z, \(\)_/-]+) [0-9]* *WT:/i),
             age = extractReGroup(parts[i], / AGE:([0-9]+d)/),
-            cga = extractReGroup(parts[i], /([0-9]+w[0-9]d)/),
+            cga = extractReGroup(parts[i], /AdjGA:([0-9]+w[0-9]d)/),
             weight = extractReGroup(parts[i], / WT:([0-9.]+) AGE/);
         
         data.push({
