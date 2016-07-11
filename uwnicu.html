@@ -94,7 +94,7 @@
       <div class="col-xs-12">
         <table class="table table-bordered table-condensed">
           <tbody>
-            <tr><th style="width: 90px">Name</th></tr>
+            <tr><th style="width: 1px">Name</th></tr>
             <tr><th>Date</th></tr>
             <tr>
               <th>Age</th>
@@ -397,7 +397,7 @@
             biliVal = extractReGroup(biliMatch, /tb: ([0-9.]*)/i),
             bili = biliVal && ('(' + biliDate + ') ' + biliVal) || undefined,
             giMeds = spliceGIMeds(meds),
-            gi = (bili && ('Bili: ' + bili + '<br>') || '') + (giMeds && giMeds.join(', ') || ''),  
+            gi = (bili && ('Bili: ' + bili + '<br>') || '') + (giMeds && giMeds.join(', ') || ''),
             neuro = spliceNeuroMeds(meds).concat(spliceNeuroDrips(drips)).join('<br>'),
             cbcMatch = extractReGroup(parts[i], /CBC ([\s\S]*?)(?=Chem7)/i),
             cbc = cbcMatch && cbcMatch
@@ -406,8 +406,9 @@
             heme = (cbc && (cbc + '<br>') || '') + spliceFe(meds).join(', '),
             chemMatch = extractReGroup(parts[i], /Chem7([\s\S]*?)(?=I\/Os)/i),
             chem = chemMatch && chemMatch
-                      .replace(/([0-9]+\/[0-9]+ [0-9]+:[0-9]+)/, '($1)')
-                      .replace(/([0-9]+) +([0-9]+) +([0-9]+) *\n([0-9.]+) +([0-9]+) +([0-9.]+)/, 'Na $1 K $4 Cl $2 HCO3 $5 BUN $3 Cr $6')
+                      .replace(/^.*([0-9]+\/[0-9]+ [0-9]+:[0-9]+) *\n([^\s]+) ([^\s]+) ([^\s]+) *\n([^\s]+) ([^\s]+) ([^\s]+)/, '$1 Na=$2 K=$5 Cl=$3 HCO3=$6 BUN=$4 Cr=$7')
+                      .replace(/([0-9]+\/[0-9]+ [0-9]+:[0-9]+)/g, '($1)')
+                      .replace(/([0-9]+) +([0-9]+) +([0-9]+) *\n([0-9.]+) +([0-9]+) +([0-9.]+)/, 'Na=$1 K=$4 Cl=$2 HCO3=$5 BUN=$3 Cr=$6')
                       .replace(/Ca[\s\n]*MG[\s\n]*Phos[\s\n]*i-STAT[\s\n]*/i, '')
                       .replace(/Ca[\s\n]*\(Ionized\)[\s\n]*cs[\s\n]*/i, '')
                       .replace(/cs[\s\n]*Lact: ->/i, '')
@@ -527,11 +528,13 @@
       var medlist = spliceMeds(meds, {
         'caffeine': /caffeine/i,
       });
-      for (var i = meds.length-1; i >= 0; i--) {
-        var morphineMatch = meds[i].match(/morphine\s*-.*?([0-9.]+.*?g).*?(Q[0-9]+)/i);
-        if (morphineMatch) {
-          medlist.push('morphine (' + morphineMatch[1] + ' ' + morphineMatch[2] + ')');
-          meds.splice(i, 1);
+      if (Array.isArray(meds)) {
+        for (var i = meds.length-1; i >= 0; i--) {
+          var morphineMatch = meds[i].match(/morphine\s*-.*?([0-9.]+.*?g).*?(Q[0-9]+)/i);
+          if (morphineMatch) {
+            medlist.push('morphine (' + morphineMatch[1] + ' ' + morphineMatch[2] + ')');
+            meds.splice(i, 1);
+          }
         }
       }
       return medlist;
