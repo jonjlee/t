@@ -434,7 +434,7 @@
         
         if (o2device.match(/Room air/i)) {
           resp = 'RA'
-        } else if (ventMode.match(/HFOV/i)) {
+        } else if (ventMode.match(/HFOV/i) || (o2device.match(/Ventilator/i) && ventMode == '*' && hfovHz != '*')) {
           resp = ventMode + ' Hz ' + hfovHz + ' Amp ' + hfovAmp + ' MAP ' + hfovMAP;
         } else if (o2device.match(/Ventilator/i)) {
           resp = ventMode + ' ' + pip + '/' + peep + 'x' + ventRate + (tv && (' TV' + tv) || '') + (pipRange && (' PIPs ' + pipRange) || '');
